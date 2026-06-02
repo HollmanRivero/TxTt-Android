@@ -1,68 +1,89 @@
 # TxTt-Android
 
-Android-bygg av TxTt-meldingsappen, pakket med [Capacitor](https://capacitorjs.com).
-Capacitor legger React/Vite-web-appen inn i et native Android-skall (WebView) og
-lar deg bygge en `.apk`.
+Android-bygg av **TxTt**-meldingsappen, pakket med [Capacitor](https://capacitorjs.com).
+Capacitor legger React/Vite-web-appen inn i et native Android-skall (WebView) slik at
+den kan bygges til en `.apk` og installeres på Android-telefoner.
 
 - **App-ID:** `com.txtt.app`
 - **App-navn:** TxTt
-- **Mål:** Android 13 (minSdk 33) og Android 14 (target/compile 34)
+- **Mål-Android:** 13 (minSdk 33) og 14 (target/compile 34)
 
-> Dette prosjektet er laget for å bygges på **Windows**. Mappen inneholder bare
-> kildekode – ingen `node_modules` og ingen ferdig `android/`-mappe. Begge deler
-> lages automatisk når du kjører byggeskriptet under.
+> Repoet inneholder bare kildekode – ingen `node_modules` og ingen `android/`-mappe.
+> Begge deler lages automatisk av byggeskriptene / arbeidsflyten under.
 
-## Forutsetninger (på Windows-PC-en)
+---
 
-1. **Node.js** – https://nodejs.org (LTS, f.eks. 20 eller 22)
-2. **Android Studio** – https://developer.android.com/studio
-   (gir deg Android SDK, JDK og Gradle)
+## Tre måter å få en APK
 
-## Bygg APK – enkleste vei
+### 1) Last ned ferdig APK fra GitHub Actions (ingen verktøy lokalt)
 
-1. Kopier hele `TxTt-Android`-mappen til Windows-PC-en.
-2. Dobbeltklikk **`build-android.bat`**.
+Hver push til `main` bygger en APK automatisk i skyen.
 
-Skriptet kjører i rekkefølge:
+1. Gå til **Actions**-fanen i repoet.
+2. Åpne siste **Build Android APK**-kjøring.
+3. Last ned artifact-en **TxTt-debug-apk** nederst.
 
-1. `npm install` – henter alle pakker (inkl. Capacitor)
-2. `npm run build` – bygger web-appen til `dist/`
-3. `npx cap add android` – lager `android/`-prosjektet (kun første gang)
-4. setter SDK-nivå til Android 13/14
-5. `npx cap sync android` – kopierer web-appen inn i Android-prosjektet
+Vil du starte et bygg manuelt: Actions ▸ Build Android APK ▸ **Run workflow**.
 
-Til slutt bygger du selve APK-en:
+### 2) Bygg lokalt på Windows
 
-**A) I Android Studio:**
+1. Installer **Node.js** (https://nodejs.org) og **Android Studio**
+   (https://developer.android.com/studio).
+2. Klon eller last ned repoet.
+3. Dobbeltklikk **`build-android.bat`**.
+4. Bygg APK: `npx cap open android` (Android Studio) **eller**
+   `cd android && gradlew.bat assembleDebug`.
 
-```
-npx cap open android
-```
+### 3) Bygg lokalt på Mac / Linux
 
-…og velg **Build ▸ Build Bundle(s) / APK(s) ▸ Build APK(s)**.
+1. Installer **Node.js** og **Android Studio**.
+2. Klon repoet.
+3. Kjør:
 
-**B) Fra kommandolinjen:**
+   ```bash
+   chmod +x build-android.sh
+   ./build-android.sh
+   ```
+4. Bygg APK: `npx cap open android` **eller** `cd android && ./gradlew assembleDebug`.
 
-```
-cd android
-gradlew.bat assembleDebug
-```
-
-Ferdig APK havner her:
+**Ferdig APK havner her:**
 
 ```
-android\app\build\outputs\apk\debug\app-debug.apk
+android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Kopier den til Android-telefonen (13/14) og installer (tillat «ukjente kilder»).
+Kopier den til en Android-telefon (13/14) og installer (tillat «ukjente kilder»).
 
-## .env.local (Supabase-nøkler)
+---
 
-`.env.local` ligger allerede i mappen og brukes automatisk av `npm run build`.
-Den er holdt utenfor Git (`.gitignore`), men følger med når du kopierer mappen fysisk.
+## Supabase-nøkler (backend)
+
+Appen snakker med Supabase. Du bruker dine egne nøkler:
+
+- **Lokalt bygg:** lag en fil `.env.local` (se `.env.example`) med:
+
+  ```
+  VITE_SUPABASE_URL=https://ditt-prosjekt.supabase.co
+  VITE_SUPABASE_ANON_KEY=din_anon_key
+  ```
+
+- **Sky-bygg (Actions):** legg de samme verdiene som repo-**Secrets**
+  (`Settings ▸ Secrets and variables ▸ Actions`):
+  `VITE_SUPABASE_URL` og `VITE_SUPABASE_ANON_KEY`.
+  Uten secrets bygges appen fortsatt, men uten fungerende backend.
+
+`.env.local` er holdt utenfor Git (`.gitignore`).
+
+---
 
 ## Kjent begrensning: innlogging
 
 Google/Apple-innlogging bruker en web-redirect (`window.location.origin`) som ikke
 fungerer rett ut av boksen inne i en APK. **E-post/SMS-engangskode virker.**
-Sosial innlogging kan kobles på senere med Android «deep links» (App Links).
+Sosial innlogging kan kobles på senere med Android App Links (deep links).
+
+---
+
+## Lisens
+
+Se `LICENSE` i hovedprosjektet. Proprietær – all rett forbeholdt.
