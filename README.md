@@ -86,4 +86,6 @@ Sosial innlogging kan kobles på senere med Android App Links (deep links).
 
 ## Lisens
 
-Se `LICENSE` i hovedprosjektet. Proprietær – all rett forbeholdt.
+MIT – se [`LICENSE`](LICENSE). Fritt å bruke, endre og distribuere.
+
+**Kontakt:** Hollman Rivero · hollman.rivero@bygg-salazar.no · [WhatsApp](https://wa.me/4793672121)
