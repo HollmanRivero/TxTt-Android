@@ -535,6 +535,10 @@ export default function AuthPage() {
           </>
         )}
 
+        <p style={{ marginTop: 18, fontSize: "0.78rem", lineHeight: 1.5, color: "#6b6b80", textAlign: "center" }}>
+          Free up to <strong style={{ color: "#9a9aae" }}>5&nbsp;GB of storage per user</strong>.
+          Need more? You can set up your own Supabase backend.
+        </p>
       </div>
     </div>
   );
