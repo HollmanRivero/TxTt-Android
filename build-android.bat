@@ -26,17 +26,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo  [1/5] npm install ...
+echo  [1/6] npm install ...
 call npm install
 if errorlevel 1 ( echo  [FEIL] npm install feilet. & pause & exit /b 1 )
 
 echo.
-echo  [2/5] Bygger web-appen (vite build) ...
+echo  [2/6] Bygger web-appen (vite build) ...
 call npm run build
 if errorlevel 1 ( echo  [FEIL] build feilet. & pause & exit /b 1 )
 
 echo.
-echo  [3/5] Legger til Android-plattform (hvis den mangler) ...
+echo  [3/6] Legger til Android-plattform (hvis den mangler) ...
 if not exist "android" (
     call npx cap add android
     if errorlevel 1 ( echo  [FEIL] cap add android feilet. & pause & exit /b 1 )
@@ -45,11 +45,20 @@ if not exist "android" (
 )
 
 echo.
-echo  [4/5] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ...
+echo  [4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ...
 powershell -NoProfile -Command "$f='android\variables.gradle'; if (Test-Path $f) { (Get-Content $f) -replace 'minSdkVersion = \d+','minSdkVersion = 33' -replace 'compileSdkVersion = \d+','compileSdkVersion = 34' -replace 'targetSdkVersion = \d+','targetSdkVersion = 34' | Set-Content $f }"
 
 echo.
-echo  [5/5] Synker web-appen inn i Android-prosjektet (cap sync) ...
+echo  [5/6] Genererer Android-ikon og splash screen fra resources/ ...
+if exist "resources\icon.png" (
+    call npx capacitor-assets generate --android
+    if errorlevel 1 ( echo  [ADVARSEL] capacitor-assets feilet - APK far default-ikon. )
+) else (
+    echo  resources\icon.png mangler - hopper over asset-generering.
+)
+
+echo.
+echo  [6/6] Synker web-appen inn i Android-prosjektet (cap sync) ...
 call npx cap sync android
 if errorlevel 1 ( echo  [FEIL] cap sync feilet. & pause & exit /b 1 )
 

@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Capacitor APK trenger ikke service worker - app er allerede native.
+      // injectRegister: null forhindrer at registerSW.js inkluderes i index.html.
+      injectRegister: null,
       registerType: "autoUpdate",
       includeAssets: [
         "favicon.ico",

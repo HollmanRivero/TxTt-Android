@@ -37,26 +37,21 @@ export default function CallRoom() {
         console.log("[Call] onRemoteStream mottatt - tracks:",
           stream.getTracks().map(t => `${t.kind}:${t.enabled}`));
 
-        // Sett srcObject KUN hvis den er forskjellig - autoPlay-attributtet
-        // tar seg av play-kall. Manuell play() interfererer og kaster
-        // "interrupted by new load" feil.
+        // Sett srcObject paa nytt hver gang - viktig i Capacitor WebView
+        // der video-elementet ikke alltid plukker opp nye tracks dynamisk.
         const v = remoteVideoRef.current;
-        if (v && v.srcObject !== stream) {
+        if (v) {
           v.srcObject = stream;
+          v.play().catch(e => {
+            if (e.name !== "AbortError") console.warn("[Call] video.play():", e.name);
+          });
         }
         const a = remoteAudioRef.current;
-        if (a && a.srcObject !== stream) {
+        if (a) {
           a.srcObject = stream;
-          // Eksplisitt play paa audio-elementet etter en kort delay,
-          // hvis autoPlay ikke trigger (skjer typisk paa Chrome Windows).
-          // AbortError ignoreres - det betyr bare at en annen play() er paa vei.
-          setTimeout(() => {
-            a.play().catch(e => {
-              if (e.name !== "AbortError") {
-                console.warn("[Call] audio.play() feilet:", e.name, e.message);
-              }
-            });
-          }, 100);
+          a.play().catch(e => {
+            if (e.name !== "AbortError") console.warn("[Call] audio.play():", e.name);
+          });
         }
         setCallState("connected");
         startDurationTimer();

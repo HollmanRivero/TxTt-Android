@@ -2,7 +2,17 @@
   "appId": "com.txtt.app",
   "appName": "TxTt",
   "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": [
+      "*.supabase.co",
+      "*.metered.ca",
+      "*.metered.live"
+    ]
+  },
   "android": {
-    "allowMixedContent": true
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": true
   }
 }

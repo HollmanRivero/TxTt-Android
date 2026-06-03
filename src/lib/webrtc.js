@@ -1,31 +1,31 @@
 import { supabase } from "./supabase";
 
-// ── ICE servers ───────────────────────────────────────────────────────────────
-// STUN finner offentlig IP (gratis). TURN relayer trafikk hvis NAT blokkerer
-// direkte peer-to-peer (nodvendig for de fleste hjemmenettverk).
-// Open Relay Project = gratis offentlig TURN, OK for testing.
-// For produksjon: kjor egen Coturn eller bruk Twilio/Metered.
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun.cloudflare.com:3478" },
-    // Multiple TURN-servere - flere endepunkter + TCP for aa komme gjennom strenge firewalls
-    {
-      urls: [
-        "turn:openrelay.metered.ca:80",
-        "turn:openrelay.metered.ca:443",
-        "turn:openrelay.metered.ca:80?transport=tcp",
-        "turn:openrelay.metered.ca:443?transport=tcp",
-        "turns:openrelay.metered.ca:443?transport=tcp",
-      ],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-  ],
-  // Pre-warm ICE-kandidater for raskere kobling
-  iceCandidatePoolSize: 4,
-};
+const METERED_API_URL = import.meta.env.VITE_METERED_API_URL;
+const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY;
+
+const STUN_FALLBACK = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun.cloudflare.com:3478" },
+];
+
+let _cachedIceServers = null;
+let _cachedAt = 0;
+
+async function getIceServers() {
+  if (!METERED_API_URL || !METERED_API_KEY) return STUN_FALLBACK;
+  if (_cachedIceServers && Date.now() - _cachedAt < 60000) return _cachedIceServers;
+  try {
+    const res = await fetch(`${METERED_API_URL}?apiKey=${METERED_API_KEY}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const servers = await res.json();
+    _cachedIceServers = servers;
+    _cachedAt = Date.now();
+    return servers;
+  } catch (err) {
+    console.warn("[WebRTC] Metered failed, fallback to STUN:", err.message);
+    return STUN_FALLBACK;
+  }
+}
 
 /**
  * CallSession manages one WebRTC call.
@@ -50,7 +50,8 @@ export class CallSession {
 
   // ── Set up the peer connection ──────────────────────────────
   async _createPeerConnection() {
-    this.pc = new RTCPeerConnection(ICE_SERVERS);
+    const iceServers = await getIceServers();
+    this.pc = new RTCPeerConnection({ iceServers, iceCandidatePoolSize: 4 });
 
     // Send our ICE candidates to the other peer
     this.pc.onicecandidate = (event) => {
@@ -63,14 +64,14 @@ export class CallSession {
       }
     };
 
-    // Receive the remote stream - dedupe siden ontrack fyrer per track (audio + video)
+    // Receive the remote stream - kalles per track (audio + video).
+    // Vi MAA kalle onRemoteStream for HVER ontrack, ikke dedupere -
+    // ellers kan video-tracket ankomme etter at srcObject ble satt og
+    // video-elementet ikke vet om den nye tracken.
     this.pc.ontrack = (event) => {
       const stream = event.streams[0];
-      console.log("[WebRTC] ontrack - mottok track:", event.track.kind);
-      if (this._lastRemoteStream === stream) {
-        return; // samme stream som forrige track-kall, hopper over
-      }
-      this._lastRemoteStream = stream;
+      console.log("[WebRTC] ontrack - mottok track:", event.track.kind,
+        "stream tracks:", stream.getTracks().map(t => t.kind).join(","));
       this.onRemoteStream?.(stream);
     };
 
@@ -280,6 +281,8 @@ export class CallSession {
 
   // ── Hang up ─────────────────────────────────────────────────
   hangup() {
+    if (this._hungUp) return;
+    this._hungUp = true;
     this._signal("hangup", {});
     this.localStream?.getTracks().forEach((track) => track.stop());
     this.pc?.close();

@@ -16,20 +16,20 @@ if ! command -v node >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/5] npm install ..."
+echo "[1/6] npm install ..."
 npm install
 
-echo "[2/5] Bygger web-appen (vite build) ..."
+echo "[2/6] Bygger web-appen (vite build) ..."
 npm run build
 
-echo "[3/5] Legger til Android-plattform (hvis den mangler) ..."
+echo "[3/6] Legger til Android-plattform (hvis den mangler) ..."
 if [ ! -d android ]; then
   npx cap add android
 else
   echo "  android-mappen finnes allerede - hopper over cap add."
 fi
 
-echo "[4/5] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ..."
+echo "[4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ..."
 if [ -f android/variables.gradle ]; then
   sed -i.bak \
     -e 's/minSdkVersion = [0-9]*/minSdkVersion = 33/' \
@@ -38,7 +38,14 @@ if [ -f android/variables.gradle ]; then
     android/variables.gradle && rm -f android/variables.gradle.bak
 fi
 
-echo "[5/5] Synker web-appen inn i Android-prosjektet (cap sync) ..."
+echo "[5/6] Genererer Android-ikon og splash screen fra resources/ ..."
+if [ -f resources/icon.png ]; then
+  npx capacitor-assets generate --android || echo "[ADVARSEL] capacitor-assets feilet - APK far default-ikon."
+else
+  echo "  resources/icon.png mangler - hopper over asset-generering."
+fi
+
+echo "[6/6] Synker web-appen inn i Android-prosjektet (cap sync) ..."
 npx cap sync android
 
 echo
