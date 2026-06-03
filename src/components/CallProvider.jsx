@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { listenForCalls } from "../lib/webrtc";
 import { supabase } from "../lib/supabase";
+import { registerPushForUser } from "../lib/push";
 import "./IncomingCall.css";
 
 const CallContext = createContext(null);
@@ -16,6 +17,18 @@ export function CallProvider({ children }) {
   useEffect(() => {
     console.log("[CallProvider] incomingCall state ->", incomingCall);
   }, [incomingCall]);
+
+  // ── Registrer enheten for push-varsler (native) ─────────────
+  useEffect(() => {
+    if (!user) return;
+    registerPushForUser(user.id, {
+      onCallTapped: ({ conversationId, callerName, isVideo }) => {
+        navigate(`/call/${conversationId}`, {
+          state: { isVideo, isAnswering: true, callerName },
+        });
+      },
+    });
+  }, [user, navigate]);
 
   // ── Listen for incoming calls globally ──────────────────────
   useEffect(() => {

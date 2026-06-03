@@ -350,6 +350,17 @@ export const inviteToCall = async ({ targetUserId, conversationId, callerId, cal
   });
   console.log("[inviteToCall] send-result:", result);
 
+  // Push-varsel via Edge Function (fire-and-forget) saa mottakeren ringer selv
+  // om appen er lukket. Vi venter IKKE paa svar - en treg/cold-start funksjon
+  // skal aldri forsinke selve anropet (det ville trigget timeout i handleStartCall).
+  supabase.functions
+    .invoke("notify-call", {
+      body: { calleeUserId: targetUserId, conversationId, callerName, isVideo },
+    })
+    .catch((err) =>
+      console.warn("[inviteToCall] notify-call push feilet:", err?.message ?? err),
+    );
+
   // Clean up after sending
   setTimeout(() => supabase.removeChannel(channel), 1000);
 };
