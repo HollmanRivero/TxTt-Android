@@ -46,8 +46,8 @@ jobs:
       - name: Set Android 13/14 SDK levels
         run: |
           sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 33/' android/variables.gradle
-          sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 34/' android/variables.gradle
-          sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 34/' android/variables.gradle
+          sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 35/' android/variables.gradle
+          sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 35/' android/variables.gradle
 
       - name: Sync Capacitor
         run: npx cap sync android

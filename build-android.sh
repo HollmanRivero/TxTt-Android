@@ -29,12 +29,12 @@ else
   echo "  android-mappen finnes allerede - hopper over cap add."
 fi
 
-echo "[4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ..."
+echo "[4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 35 (Android 15) ..."
 if [ -f android/variables.gradle ]; then
   sed -i.bak \
     -e 's/minSdkVersion = [0-9]*/minSdkVersion = 33/' \
-    -e 's/compileSdkVersion = [0-9]*/compileSdkVersion = 34/' \
-    -e 's/targetSdkVersion = [0-9]*/targetSdkVersion = 34/' \
+    -e 's/compileSdkVersion = [0-9]*/compileSdkVersion = 35/' \
+    -e 's/targetSdkVersion = [0-9]*/targetSdkVersion = 35/' \
     android/variables.gradle && rm -f android/variables.gradle.bak
 fi
 

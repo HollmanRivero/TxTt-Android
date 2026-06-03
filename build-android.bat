@@ -45,8 +45,8 @@ if not exist "android" (
 )
 
 echo.
-echo  [4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 34 (Android 14) ...
-powershell -NoProfile -Command "$f='android\variables.gradle'; if (Test-Path $f) { (Get-Content $f) -replace 'minSdkVersion = \d+','minSdkVersion = 33' -replace 'compileSdkVersion = \d+','compileSdkVersion = 34' -replace 'targetSdkVersion = \d+','targetSdkVersion = 34' | Set-Content $f }"
+echo  [4/6] Setter SDK-nivaa: minSdk 33 (Android 13), target/compile 35 (Android 15) ...
+powershell -NoProfile -Command "$f='android\variables.gradle'; if (Test-Path $f) { (Get-Content $f) -replace 'minSdkVersion = \d+','minSdkVersion = 33' -replace 'compileSdkVersion = \d+','compileSdkVersion = 35' -replace 'targetSdkVersion = \d+','targetSdkVersion = 35' | Set-Content $f }"
 
 echo.
 echo  [5/6] Genererer Android-ikon og splash screen fra resources/ ...
