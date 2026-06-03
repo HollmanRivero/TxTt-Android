@@ -43,7 +43,10 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Set Android 13/14 SDK levels
+      - name: Generate app icon and splash
+        run: npx capacitor-assets generate --android
+
+      - name: Set Android 13/15 SDK levels
         run: |
           sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 33/' android/variables.gradle
           sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 35/' android/variables.gradle
