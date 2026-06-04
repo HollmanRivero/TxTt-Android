@@ -41,6 +41,9 @@ export default function CallRoom() {
         // der video-elementet ikke alltid plukker opp nye tracks dynamisk.
         const v = remoteVideoRef.current;
         if (v) {
+          // Video muted (lyd gaar via eget audio-element) - ellers blokkerer
+          // WebView autoplay-policy en video med audio-track -> svart bilde.
+          v.muted = true;
           v.srcObject = stream;
           v.play().catch(e => {
             if (e.name !== "AbortError") console.warn("[Call] video.play():", e.name);
@@ -146,7 +149,7 @@ export default function CallRoom() {
       {/* Remote video (full screen) */}
       <div className="remote-video-container">
         {isVideo ? (
-          <video ref={remoteVideoRef} autoPlay playsInline className="remote-video" />
+          <video ref={remoteVideoRef} autoPlay playsInline muted className="remote-video" />
         ) : (
           <div className="audio-call-bg">
             <div className="audio-avatar">
