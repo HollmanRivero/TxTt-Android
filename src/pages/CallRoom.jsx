@@ -83,7 +83,16 @@ export default function CallRoom() {
         }
       } catch (err) {
         console.error("[Call] setup feilet:", err);
-        alert("Could not start call: " + err.message);
+        let msg = "Could not start the call.";
+        if (err.name === "NotReadableError" || err.name === "TrackStartError")
+          msg = "Your camera or microphone is in use by another app. Close it (e.g. the Camera app or another video app) and try again.";
+        else if (err.name === "NotAllowedError" || err.name === "SecurityError")
+          msg = "Camera/microphone access was denied. Allow access in app settings and try again.";
+        else if (err.name === "NotFoundError" || err.name === "OverconstrainedError")
+          msg = "No camera or microphone was found on this device.";
+        else if (err.message)
+          msg += " (" + err.message + ")";
+        alert(msg);
         navigate(`/chat/${conversationId}`);
       }
     };
