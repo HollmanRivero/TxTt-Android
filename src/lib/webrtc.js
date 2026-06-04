@@ -3,27 +3,56 @@ import { supabase } from "./supabase";
 const METERED_API_URL = import.meta.env.VITE_METERED_API_URL;
 const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY;
 
-const STUN_FALLBACK = [
+// Fallback: gratis STUN + Open Relay (TURN) hvis Metered mangler/feiler.
+// Samme oppsett som web-prosjektet, slik at samtaler over ulike nett (mobildata
+// <-> wifi) kan kobles selv om Metered-henting svikter.
+const FALLBACK_ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun.cloudflare.com:3478" },
+  // Open Relay (kan vaere blokkert/overbelastet i visse nettverk)
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+      "turns:openrelay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  // Backup TURN-pool fra Metered's global relay (krever ikke konto, lavere kvote)
+  {
+    urls: [
+      "turn:global.relay.metered.ca:80",
+      "turn:global.relay.metered.ca:443",
+      "turns:global.relay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
 ];
 
 let _cachedIceServers = null;
 let _cachedAt = 0;
 
+// Henter ICE-servere fra Metered-kontoen. Cacher i 60 sek. Faller tilbake til
+// gratis STUN/Open Relay hvis nokkel mangler eller API-kallet feiler.
 async function getIceServers() {
-  if (!METERED_API_URL || !METERED_API_KEY) return STUN_FALLBACK;
+  if (!METERED_API_URL || !METERED_API_KEY) return FALLBACK_ICE_SERVERS;
   if (_cachedIceServers && Date.now() - _cachedAt < 60000) return _cachedIceServers;
   try {
     const res = await fetch(`${METERED_API_URL}?apiKey=${METERED_API_KEY}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const servers = await res.json();
-    _cachedIceServers = servers;
+    // Metered foerst, gratis-pool som ekstra fallback bak
+    const merged = [...servers, ...FALLBACK_ICE_SERVERS];
+    _cachedIceServers = merged;
     _cachedAt = Date.now();
-    return servers;
+    return merged;
   } catch (err) {
-    console.warn("[WebRTC] Metered failed, fallback to STUN:", err.message);
-    return STUN_FALLBACK;
+    console.warn("[WebRTC] Metered TURN feilet, bruker fallback:", err.message);
+    return FALLBACK_ICE_SERVERS;
   }
 }
 
