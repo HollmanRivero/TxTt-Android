@@ -44,3 +44,16 @@ android/app/google-services.json
 android/app/src/main/assets/public/
 android/app/src/main/assets/capacitor.config.json
 android/app/src/main/assets/capacitor.plugins.json
+
+# Stray Android Studio-prosjekt paa repo-roten (den ekte appen ligger i android/).
+# Aapne ALLTID android/-mappen i Android Studio, ikke repo-roten.
+/app/
+/build/
+/build.gradle
+/settings.gradle
+/gradle.properties
+/gradle/
+/gradlew
+/gradlew.bat
+/local.properties
+/.gradle/
