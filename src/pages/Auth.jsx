@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   signInWithGoogle,
   signInWithApple,
@@ -47,6 +47,27 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
   const [info, setInfo]       = useState(null);
+
+  // ── First-run notice ("READ CAREFULLY") ──────────────────────────────────
+  // Shown ONCE, before the user registers. Explains that TxTt is free (up to
+  // 5 GB on our shared backend) and that anyone who wants more space / full
+  // ownership can spin up their own free Supabase backend in ~2 min. Declining
+  // is fine — they simply keep using the shared backend (our credentials).
+  const [showIntro, setShowIntro] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("txtt_intro_seen")) setShowIntro(true);
+    } catch { /* localStorage unavailable - just skip the notice */ }
+  }, []);
+  const dismissIntro = () => {
+    try { localStorage.setItem("txtt_intro_seen", "1"); } catch { /* ignore */ }
+    setShowIntro(false);
+  };
+  // Opens Supabase sign-up. window.open works on web AND in the Capacitor
+  // WebView (Android opens it in the system browser).
+  const openSupabaseSignup = () => {
+    window.open("https://supabase.com/dashboard/sign-up", "_blank", "noopener,noreferrer");
+  };
 
   const resetForm = (nextView) => {
     setInputValue(""); setInputType(null);
@@ -218,6 +239,78 @@ export default function AuthPage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="auth-root">
+
+      {/* ── First-run "READ CAREFULLY" notice ─────────────────────────── */}
+      {showIntro && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(10,10,20,0.80)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff", color: "#1a1a2e",
+              borderRadius: 16, padding: "26px 24px",
+              maxWidth: 460, width: "100%",
+              maxHeight: "88vh", overflowY: "auto",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.35)", lineHeight: 1.55,
+            }}
+          >
+            <h2 style={{ margin: "0 0 6px", fontSize: "1.35rem", letterSpacing: "0.04em" }}>
+              READ CAREFULLY
+            </h2>
+            <p style={{ margin: "0 0 14px", fontWeight: 700, color: "#0b5fff" }}>
+              TxTt is 100% free to use.
+            </p>
+            <p style={{ margin: "0 0 12px", fontSize: "0.95rem" }}>
+              Every account includes up to <strong>5&nbsp;GB of storage</strong> on our shared
+              backend — no cost, no subscription, ever.
+            </p>
+            <p style={{ margin: "0 0 12px", fontSize: "0.95rem" }}>
+              Want more space and full ownership of your own data? You can connect TxTt to your{" "}
+              <strong>own free Supabase backend</strong>. Creating a Supabase account is free and
+              takes about <strong>2 minutes</strong> — you get your own private database to use
+              with the app.
+            </p>
+            <p style={{ margin: "0 0 18px", fontSize: "0.95rem" }}>
+              Don&apos;t want to bother? No problem — just tap <strong>Continue</strong> and you&apos;ll
+              keep using our shared free backend (up to 5&nbsp;GB).
+            </p>
+
+            <button
+              type="button"
+              onClick={openSupabaseSignup}
+              style={{
+                display: "block", width: "100%", padding: "13px 16px", marginBottom: 10,
+                borderRadius: 10, border: "2px solid #3ecf8e", background: "#3ecf8e",
+                color: "#03301f", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer",
+              }}
+            >
+              Create my free Supabase account →
+            </button>
+            <button
+              type="button"
+              onClick={dismissIntro}
+              style={{
+                display: "block", width: "100%", padding: "13px 16px",
+                borderRadius: 10, border: "1px solid #c9ccd6", background: "#f4f5f8",
+                color: "#1a1a2e", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer",
+              }}
+            >
+              Continue (use free shared backend)
+            </button>
+
+            <p style={{ margin: "16px 0 0", fontSize: "0.78rem", color: "#6b6b80", textAlign: "center" }}>
+              By continuing you agree to our{" "}
+              <a href="/privacy" style={{ color: "#0b5fff" }}>Privacy Policy</a>.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="auth-card">
 
         <div className="auth-logo">
@@ -238,6 +331,8 @@ export default function AuthPage() {
                   value={inputValue}
                   onChange={handleInputChange}
                   autoComplete="username"
+                  name="username"
+                  id="login-identifier"
                   disabled={loading}
                 />
               </label>
@@ -252,6 +347,8 @@ export default function AuthPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(null); }}
                     autoComplete="current-password"
+                    name="current-password"
+                    id="login-password"
                     disabled={loading}
                   />
                   <button type="button" className="field-eye-btn"
@@ -316,6 +413,8 @@ export default function AuthPage() {
                   value={inputValue}
                   onChange={handleInputChange}
                   autoComplete="username"
+                  name="username"
+                  id="register-identifier"
                   disabled={loading}
                 />
                 {inputType && (
@@ -337,6 +436,8 @@ export default function AuthPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setError(null); }}
                     autoComplete="new-password"
+                    name="new-password"
+                    id="register-password"
                     disabled={loading}
                   />
                   <button type="button" className="field-eye-btn"
@@ -355,6 +456,8 @@ export default function AuthPage() {
                   value={confirmPassword}
                   onChange={(e) => { setConfirmPassword(e.target.value); setError(null); }}
                   autoComplete="new-password"
+                  name="confirm-password"
+                  id="register-confirm-password"
                   disabled={loading}
                 />
               </label>
@@ -407,6 +510,8 @@ export default function AuthPage() {
                   onChange={(e) => { setOtp(e.target.value.slice(0, 6)); setError(null); }}
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  name="one-time-code"
+                  id="phone-verify-otp"
                   autoFocus
                   disabled={loading}
                 />
@@ -442,6 +547,8 @@ export default function AuthPage() {
                   value={inputValue}
                   onChange={handleInputChange}
                   autoComplete="username"
+                  name="username"
+                  id="forgot-identifier"
                   autoFocus
                   disabled={loading}
                 />
@@ -473,6 +580,8 @@ export default function AuthPage() {
                   onChange={(e) => { setOtp(e.target.value.slice(0, 6)); setError(null); }}
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  name="one-time-code"
+                  id="reset-verify-otp"
                   autoFocus
                   disabled={loading}
                 />
@@ -504,6 +613,8 @@ export default function AuthPage() {
                     value={newPassword}
                     onChange={(e) => { setNewPassword(e.target.value); setError(null); }}
                     autoComplete="new-password"
+                    name="new-password"
+                    id="set-new-password"
                     autoFocus
                     disabled={loading}
                   />
@@ -522,6 +633,8 @@ export default function AuthPage() {
                   value={confirmNew}
                   onChange={(e) => { setConfirmNew(e.target.value); setError(null); }}
                   autoComplete="new-password"
+                  name="confirm-new-password"
+                  id="set-confirm-new-password"
                   disabled={loading}
                 />
               </label>
@@ -537,7 +650,14 @@ export default function AuthPage() {
 
         <p style={{ marginTop: 18, fontSize: "0.78rem", lineHeight: 1.5, color: "#6b6b80", textAlign: "center" }}>
           Free up to <strong style={{ color: "#9a9aae" }}>5&nbsp;GB of storage per user</strong>.
-          Need more? You can set up your own Supabase backend.
+          Need more?{" "}
+          <a
+            href="https://supabase.com/dashboard/sign-up"
+            onClick={(e) => { e.preventDefault(); openSupabaseSignup(); }}
+            style={{ color: "#3ecf8e", fontWeight: 600, textDecoration: "none" }}
+          >
+            Create your own free Supabase backend →
+          </a>
         </p>
       </div>
     </div>

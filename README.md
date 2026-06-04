@@ -76,6 +76,47 @@ Appen snakker med Supabase. Du bruker dine egne nøkler:
 
 ---
 
+## Egen Supabase-backend (in-app «READ CAREFULLY»-notisen)
+
+Første gang noen åpner TxTt – før de registrerer seg – vises en engangs-notis kalt
+**«READ CAREFULLY»** (og en tilsvarende **«Create your own free Supabase backend →»**-lenke
+på login-skjermen). Slik henger det sammen:
+
+- TxTt er **gratis å bruke**. Hver konto får inntil **5 GB lagring** på den delte
+  backend-en som Eieren drifter – uten kostnad, uten abonnement.
+- Vil noen ha **mer plass og fullt eierskap til egne data**, kan de kjøre TxTt på
+  **sin egen gratis Supabase-backend**.
+- Vil de ikke bry seg, trykker de bare **Continue** og fortsetter på den delte
+  backend-en (Eierens credentials). Det er helt greit og er standardvalget.
+
+> ⚠️ **Ærlig forventningsstyring:** Å opprette en Supabase-*konto* tar ~2 minutter, men
+> å faktisk koble appen til din egen backend er en **engangs-oppsettjobb for utvikler** –
+> det finnes **ingen «lim inn URL/nøkkel»-knapp inne i appen i dag**. Hele backend-en
+> (databaseskjema, row-level security, evt. Edge Function) må settes opp én gang. I praksis
+> bruker derfor de aller fleste den delte backend-en; notisen finnes for å *tilby*
+> selvhosting og gjøre valget tydelig.
+
+### Slik setter du opp din egen backend
+
+1. Opprett et gratis Supabase-prosjekt på **[supabase.com/dashboard/sign-up](https://supabase.com/dashboard/sign-up)**.
+2. Kopier **Project URL** og **anon (publishable) key** fra **Project Settings → API**,
+   og noter **project ref** og **database-passord**.
+3. Legg URL + anon key i `.env.local` (lokalt bygg) eller som repo-**Secrets** for
+   sky-bygget – se «Supabase-nøkler (backend)» over.
+4. Kjør databaseskjemaet i web-prosjektet (`TxTt`-repoet): `supabase db push`
+   (lager alle tabeller + row-level security).
+5. *(Valgfritt)* Deploy AI-assistentens Edge Function og sett Anthropic-secret.
+
+Etterpå snakker appen **kun med ditt prosjekt**, og alle data ligger i **din** database –
+ingen andre ser dem.
+
+> 💡 **Skriv ned detaljene dine.** Når du oppretter prosjektet, ta vare på **Project URL**,
+> **anon key**, **database-passord** og **project ref** et trygt sted – en **Notisblokk**-fil
+> eller et **Word**-dokument holder helt fint. Du trenger dem igjen til stegene over og hvis
+> du noen gang kloner repoet på nytt.
+
+---
+
 ## Kjent begrensning: innlogging
 
 Google/Apple-innlogging bruker en web-redirect (`window.location.origin`) som ikke
