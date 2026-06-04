@@ -35,3 +35,12 @@ android/.idea/
 *.aab
 *.keystore
 .env
+
+# Hemmeligheter - ALDRI commit. Legges tilbake manuelt etter kloning (se README).
+android/keystore.properties
+android/app/google-services.json
+
+# Generert av "cap sync" ved hvert bygg (skal ikke committes)
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
