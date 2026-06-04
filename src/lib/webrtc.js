@@ -126,6 +126,13 @@ export class CallSession {
       },
       video: this.isVideo,
     });
+    // Samtalen kan ha blitt lagt paa (hangup -> this.pc = null) mens getUserMedia
+    // ventet - f.eks. ved unmount. Avbryt rolig i stedet for aa krasje paa addTrack.
+    if (!this.pc) {
+      this.localStream.getTracks().forEach((t) => t.stop());
+      this.localStream = null;
+      return null;
+    }
     this.localStream.getTracks().forEach((track) => {
       this.pc.addTrack(track, this.localStream);
     });
@@ -188,6 +195,7 @@ export class CallSession {
     this.isCaller = true;
     await this._subscribeSignaling();
     const localStream = await this._createPeerConnection();
+    if (!this.pc) return null; // samtalen ble avbrutt under oppsett (unmount)
 
     const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
@@ -203,6 +211,7 @@ export class CallSession {
     this.isCaller = false;
     await this._subscribeSignaling();
     const localStream = await this._createPeerConnection();
+    if (!this.pc) return null; // samtalen ble avbrutt under oppsett (unmount)
 
     // Fortell caller at vi er paa kanalen og klar til aa motta offer
     console.log("[WebRTC] callee sender 'ready' for aa be om offer");
