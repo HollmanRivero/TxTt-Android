@@ -8,6 +8,66 @@ import "./IncomingCall.css";
 
 const CallContext = createContext(null);
 
+// ── Klassisk "ring-ring" ringetone via Web Audio API ──────────────
+// Ingen lydfil nødvendig. Spiller en britisk-stil dobbelt-ring i loop
+// til .stop() kalles. Returnerer et objekt med en stop()-funksjon.
+function createClassicRingtone() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return { stop() {} }; // ingen Web Audio-støtte
+
+  const ctx = new AudioCtx();
+  let stopped = false;
+  let loopTimer = null;
+
+  // Spiller én tone (to frekvenser samtidig) fra startTime i gitt varighet
+  const tone = (startTime, duration) => {
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = "sine";
+    osc2.type = "sine";
+    osc1.frequency.value = 400; // klassisk ringetone
+    osc2.frequency.value = 450;
+
+    // Myk inn/ut for å unngå "klikk"-lyder
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.28, startTime + 0.03);
+    gain.gain.setValueAtTime(0.28, startTime + duration - 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(startTime);
+    osc2.start(startTime);
+    osc1.stop(startTime + duration);
+    osc2.stop(startTime + duration);
+  };
+
+  // Én syklus = dobbelt-ring + pause, deretter gjenta (ring-ring ... ring-ring)
+  const ringCycle = () => {
+    if (stopped) return;
+    const t = ctx.currentTime;
+    tone(t, 0.4);          // ring
+    tone(t + 0.6, 0.4);    // ring (0.2s gap mellom de to)
+    loopTimer = setTimeout(ringCycle, 3000); // ~2s stillhet før neste syklus
+  };
+
+  // Nettlesere/WebView kan starte konteksten "suspended" – prøv å vekke den
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  ringCycle();
+
+  return {
+    stop() {
+      stopped = true;
+      if (loopTimer) clearTimeout(loopTimer);
+      ctx.close().catch(() => {});
+    },
+  };
+}
+
 export function CallProvider({ children }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +76,19 @@ export function CallProvider({ children }) {
   // Logger hver gang incomingCall endrer seg
   useEffect(() => {
     console.log("[CallProvider] incomingCall state ->", incomingCall);
+  }, [incomingCall]);
+
+  // ── Spill ringetone mens et innkommende anrop vises ─────────
+  // Starter når incomingCall settes, stopper automatisk når det blir null
+  // (svart, avvist eller auto-avvist etter 30s).
+  useEffect(() => {
+    if (!incomingCall) return;
+    console.log("[CallProvider] starter ringetone");
+    const ringtone = createClassicRingtone();
+    return () => {
+      console.log("[CallProvider] stopper ringetone");
+      ringtone.stop();
+    };
   }, [incomingCall]);
 
   // ── Registrer enheten for push-varsler (native) ─────────────
